@@ -1,0 +1,91 @@
+# This starter workflow is for a CMake project running on multiple platforms.
+# There is a different starter workflow if you just want a single platform.
+# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-single-platform.yml
+name: CMake on debian platforms
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    container:
+      image: debian:12
+
+    strategy:
+      # Set fail-fast to false to ensure that feedback is delivered for all
+      # matrix combinations. Consider changing this to true when your
+      # workflow is stable.
+      fail-fast: false
+
+      # To add more build types (Release, Debug, RelWithDebInfo, etc.)
+      # customize the build_type list.
+      matrix:
+        os: [ubuntu-20.04,ubuntu-22.04,ubuntu-24.04]
+        build_type: [Release]
+        c_compiler: [gcc]
+        cpp_compiler: [g++]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install compiler
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ${{ matrix.compiler.cc }}
+        sudo apt-get install -y ${{ matrix.compiler.cxx }}
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get install -y cmake libmariadb-dev libopenbabel-dev build-essential cmake pkg-config
+
+    - name: Start MySQL
+      # MySQL server is already installed and configured on Ubuntu OS.
+      # See: https://github.com/actions/runner-images/tree/main/images/ubuntu
+      run: |
+        sudo systemctl start mysql.service
+
+    - name: Set reusable strings
+      # Turn repeated input strings (such as the build output directory) into step outputs.
+      # These step outputs can be used throughout the workflow file.
+      id: strings
+      shell: bash
+      run: |
+        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+
+    - name: Configure CMake
+      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only
+      # required if you are using a single-configuration generator such as make.
+      run: > 
+        cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DMY_HOST=localhost
+        -DMY_USER=root
+        -DMY_PASSWD=root
+        -S ${{ github.workspace }}
+
+    - name: Build & install
+      # Build and install Mychem
+      run: |
+        make -C ${{ steps.strings.outputs.build-output-dir }}
+        sudo make install -C ${{ steps.strings.outputs.build-output-dir }}
+
+    - name: Load functions
+      run: |
+        sudo mysql -uroot -proot < src/mychemdb.sql
+        sudo systemctl restart mysql.service
+
+    - name: Test
+      working-directory: ${{ steps.strings.outputs.build-output-dir }}
+      # Execute tests defined by the CMake configuration. Note that
+      # --build-config is needed because the default Windows generator
+      # is a multi-config generator (Visual Studio generator).
+      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for
+      # more detail
+      run: |
+        sudo ctest --build-config ${{ matrix.build_type }}
