@@ -20,6 +20,7 @@ jobs:
 
     - name: Install dependencies
       run: |
+        apt-get update
         apt-get install -y cmake g++ gcc libmariadb-dev libopenbabel-dev build-essential cmake pkg-config mariadb
 
     - name: Start MySQL
