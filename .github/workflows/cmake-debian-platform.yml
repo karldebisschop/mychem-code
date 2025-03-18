@@ -15,20 +15,6 @@ jobs:
     container:
       image: debian:12
 
-    strategy:
-      # Set fail-fast to false to ensure that feedback is delivered for all
-      # matrix combinations. Consider changing this to true when your
-      # workflow is stable.
-      fail-fast: false
-
-      # To add more build types (Release, Debug, RelWithDebInfo, etc.)
-      # customize the build_type list.
-      matrix:
-        os: [ubuntu-20.04,ubuntu-22.04,ubuntu-24.04]
-        build_type: [Release]
-        c_compiler: [gcc]
-        cpp_compiler: [g++]
-
     steps:
     - uses: actions/checkout@v4
 
