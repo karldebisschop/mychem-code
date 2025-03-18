@@ -38,13 +38,12 @@ jobs:
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only
       # required if you are using a single-configuration generator such as make.
       run: > 
-        cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        cd ${{ github.workspace }}/build && cmake ..
         -DCMAKE_CXX_COMPILER=g++
         -DCMAKE_C_COMPILER=gcc
         -DMY_HOST=localhost
         -DMY_USER=root
         -DMY_PASSWD=root
-        -S ${{ github.workspace }}
 
     - name: Build & install
       # Build and install Mychem
