@@ -29,6 +29,8 @@ jobs:
       id: strings
       shell: bash
       run: |
+        ls -l
+        pwd
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
         mkdir -p ${{ github.workspace }}/build
 
