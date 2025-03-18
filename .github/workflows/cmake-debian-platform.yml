@@ -32,15 +32,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install compiler
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y ${{ matrix.compiler.cc }}
-        sudo apt-get install -y ${{ matrix.compiler.cxx }}
-
     - name: Install dependencies
       run: |
-        sudo apt-get install -y cmake libmariadb-dev libopenbabel-dev build-essential cmake pkg-config
+        apt-get install -y cmake g++ gcc libmariadb-dev libopenbabel-dev build-essential cmake pkg-config mariadb-server
 
     - name: Start MySQL
       # MySQL server is already installed and configured on Ubuntu OS.
@@ -61,9 +55,8 @@ jobs:
       # required if you are using a single-configuration generator such as make.
       run: > 
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
-        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
-        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
-        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DCMAKE_CXX_COMPILER=g++
+        -DCMAKE_C_COMPILER=gcc
         -DMY_HOST=localhost
         -DMY_USER=root
         -DMY_PASSWD=root
