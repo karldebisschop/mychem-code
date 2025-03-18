@@ -23,12 +23,6 @@ jobs:
         apt-get update
         apt-get install -y cmake g++ gcc libmariadb-dev libopenbabel-dev build-essential cmake pkg-config mariadb-server
 
-    - name: Start MySQL
-      # MySQL server is already installed and configured on Ubuntu OS.
-      # See: https://github.com/actions/runner-images/tree/main/images/ubuntu
-      run: |
-        sudo systemctl start mysql.service
-
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs.
       # These step outputs can be used throughout the workflow file.
@@ -53,12 +47,18 @@ jobs:
       # Build and install Mychem
       run: |
         make -C ${{ steps.strings.outputs.build-output-dir }}
-        sudo make install -C ${{ steps.strings.outputs.build-output-dir }}
+        make install -C ${{ steps.strings.outputs.build-output-dir }}
+
+    - name: Start MySQL
+      # MySQL server is already installed and configured on Ubuntu OS.
+      # See: https://github.com/actions/runner-images/tree/main/images/ubuntu
+      run: |
+        sudo systemctl start mysql.service
 
     - name: Load functions
       run: |
-        sudo mysql -uroot -proot < src/mychemdb.sql
-        sudo systemctl restart mysql.service
+        mysql -uroot -proot < src/mychemdb.sql
+        systemctl restart mysql.service
 
     - name: Test
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
@@ -68,4 +68,4 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for
       # more detail
       run: |
-        sudo ctest --build-config ${{ matrix.build_type }}
+        ctest --build-config ${{ matrix.build_type }}
